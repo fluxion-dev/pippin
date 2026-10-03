@@ -34,11 +34,17 @@ chmod +x /tmp/pippin-dl/pippin-linux-x64
 # 0.1.0
 ```
 
-Direct asset URLs:
+Direct asset URLs (each `v*` tag attaches the three binaries plus the sdist/wheel):
 
 - https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-linux-x64
 - https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-osx-arm64
 - https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-win-x64.exe
+
+| RID | Binary | Size (attached asset) |
+|-----|--------|----------------------------|
+| `linux-x64` | `pippin-linux-x64` | 36,280,472 bytes (~34.6 MiB) |
+| `osx-arm64` | `pippin-osx-arm64` | 16,520,016 bytes (~15.8 MiB) |
+| `win-x64` | `pippin-win-x64.exe` | 23,468,705 bytes (~22.4 MiB) |
 
 Notes:
 

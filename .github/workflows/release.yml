@@ -79,8 +79,13 @@ jobs:
         run: PIPPIN_BIN_NAME=pippin-${{ matrix.rid }} pyinstaller pippin.spec --clean --noconfirm
       - name: Build single-file binary (windows)
         if: runner.os == 'Windows'
-        shell: msys2 {0}
-        run: PIPPIN_BIN_NAME=pippin-${{ matrix.rid }} pyinstaller pippin.spec --clean --noconfirm
+        shell: pwsh
+        run: |
+          $msysUsrBin = Join-Path (Split-Path $env:MSYSTEM_PREFIX) "usr/bin"
+          $env:PATH = "$msysUsrBin;C:\Program Files\Git\usr\bin;$env:PATH"
+          where.exe ldd
+          $env:PIPPIN_BIN_NAME = "pippin-${{ matrix.rid }}"
+          pyinstaller pippin.spec --clean --noconfirm
       - name: Assert bundle exists
         shell: bash
         run: |

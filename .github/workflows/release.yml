@@ -7,15 +7,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-dist:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install system libs for cairosvg
-        run: sudo apt-get update && sudo apt-get install -y libcairo2 libpango-1.0-0 libgdk-pixbuf2.0-0
       - run: python -m pip install --upgrade pip build
       - run: python -m build
       - name: Assert dist exists
@@ -32,24 +30,95 @@ jobs:
           name: pippin-dist
           path: dist/*
 
-  smoke-linux:
-    needs: build
-    runs-on: ubuntu-latest
+  build-binary:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: macos-14
+            rid: osx-arm64
+          - os: windows-latest
+            rid: win-x64
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install system libs for cairosvg
+      - name: Install system libs for cairosvg (linux)
+        if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libcairo2 libpango-1.0-0 libgdk-pixbuf2.0-0
+      - name: Install system libs for cairosvg (macos)
+        if: runner.os == 'macOS'
+        run: brew install cairo gdk-pixbuf
+      - uses: msys2/setup-msys2@v2
+        if: runner.os == 'Windows'
+        with:
+          msystem: mingw64
+          update: true
+          install: mingw-w64-x86_64-cairo mingw-w64-x86_64-gdk-pixbuf2 mingw-w64-x86_64-glib2
+      - name: Locate mingw64 prefix (windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          for root in C:/msys64 D:/a/_temp/msys64; do
+            if [ -f "$root/mingw64/bin/libcairo-2.dll" ]; then
+              echo "MSYSTEM_PREFIX=$root/mingw64" >> "$GITHUB_ENV"
+              echo "Found cairo at $root/mingw64"
+              break
+            fi
+          done
+          test -n "${MSYSTEM_PREFIX:-}" || { echo "libcairo-2.dll not found" >&2; exit 1; }
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install . pyinstaller
+      - name: Build single-file binary (unix)
+        if: runner.os != 'Windows'
+        run: PIPPIN_BIN_NAME=pippin-${{ matrix.rid }} pyinstaller pippin.spec --clean --noconfirm
+      - name: Build single-file binary (windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: PIPPIN_BIN_NAME=pippin-${{ matrix.rid }} pyinstaller pippin.spec --clean --noconfirm
+      - name: Assert bundle exists
+        shell: bash
+        run: |
+          shopt -s nullglob
+          files=(dist/pippin-${{ matrix.rid }}*)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No bundled binary found for ${{ matrix.rid }}" >&2
+            exit 1
+          fi
+          ls -la dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pippin-${{ matrix.rid }}
+          path: dist/pippin-${{ matrix.rid }}*
+
+  smoke:
+    needs: build-binary
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: macos-14
+            rid: osx-arm64
+          - os: windows-latest
+            rid: win-x64
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
       - uses: actions/download-artifact@v4
         with:
-          name: pippin-dist
-          path: ./dist
-      - run: python -m pip install --upgrade pip
-      - run: python -m pip install ./dist/*.whl
-      - run: pippin --help
-      - run: pippin --version
+          name: pippin-${{ matrix.rid }}
+          path: ./pippin-bin
+      - run: python -m pip install --upgrade pip pillow
+      - if: runner.os != 'Windows'
+        run: chmod +x ./pippin-bin/pippin-${{ matrix.rid }}
+      - run: ./pippin-bin/pippin-${{ matrix.rid }} --help
+      - run: ./pippin-bin/pippin-${{ matrix.rid }} --version
       - name: Smoke render (png + svg)
         run: |
           python - <<'PY'
@@ -60,11 +129,11 @@ jobs:
           img.save("/tmp/smoke.png")
           open("/tmp/smoke.svg", "w").write('<svg xmlns="http://www.w3.org/2000/svg" width="64" height="32"><rect width="64" height="32" fill="teal"/><circle cx="32" cy="16" r="10" fill="white"/></svg>')
           PY
-          pippin /tmp/smoke.png --width 32 --charset ascii --no-color
-          pippin /tmp/smoke.svg --width 32 --charset utf8 --no-color
+          ./pippin-bin/pippin-${{ matrix.rid }} /tmp/smoke.png --width 32 --charset ascii --no-color
+          ./pippin-bin/pippin-${{ matrix.rid }} /tmp/smoke.svg --width 32 --charset utf8 --no-color
 
   release:
-    needs: [build, smoke-linux]
+    needs: [build-dist, build-binary, smoke]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
@@ -73,17 +142,27 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: pippin-dist
-          path: ./dist
-      - name: Assert release asset count
+          path: ./bundles
+      - name: Assert release asset count and unique names
         run: |
           shopt -s nullglob
-          files=(./dist/*)
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "Expected dist assets, found none" >&2
+          files=(./bundles/pippin-linux-x64/pippin-linux-x64 ./bundles/pippin-osx-arm64/pippin-osx-arm64 ./bundles/pippin-win-x64/pippin-win-x64.exe)
+          if [ ${#files[@]} -ne 3 ]; then
+            echo "Expected 3 binary assets, found ${#files[@]}: ${files[*]}" >&2
+            ls -la ./bundles/*/*
             exit 1
           fi
-          ls -la ./dist
+          if [ "$(printf '%s\n' "${files[@]##*/}" | sort -u | wc -l)" -ne 3 ]; then
+            echo "Release asset basenames are not unique: ${files[*]}" >&2
+            exit 1
+          fi
+          if [ ! -f ./bundles/pippin-win-x64/pippin-win-x64.exe ]; then
+            echo "Windows asset pippin-win-x64.exe missing" >&2
+            exit 1
+          fi
+          chmod +x ./bundles/pippin-linux-x64/pippin-linux-x64 ./bundles/pippin-osx-arm64/pippin-osx-arm64
+          ls -la ./bundles/pippin-linux-x64/pippin-linux-x64 ./bundles/pippin-osx-arm64/pippin-osx-arm64 ./bundles/pippin-win-x64/pippin-win-x64.exe
+          ls -la ./bundles/pippin-dist/
       - name: Create GitHub Release (prerelease iff preview)
         run: |
           if [[ "${{ github.ref_name }}" == *-* ]]; then
@@ -91,12 +170,12 @@ jobs:
           else
             PRE=""
           fi
-          gh release create "${{ github.ref_name }}" $PRE ./dist/*
+          gh release create "${{ github.ref_name }}" $PRE ./bundles/pippin-linux-x64/pippin-linux-x64 ./bundles/pippin-osx-arm64/pippin-osx-arm64 ./bundles/pippin-win-x64/pippin-win-x64.exe ./bundles/pippin-dist/*
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   pypi:
-    needs: [build, smoke-linux]
+    needs: [build-dist, smoke]
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:

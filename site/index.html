@@ -34,8 +34,9 @@
   "license": "MIT",
   "operatingSystem": ["Windows", "macOS", "Linux"],
   "downloadUrl": [
-    "https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-0.1.0.tar.gz",
-    "https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-0.1.0-py3-none-any.whl"
+    "https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-linux-x64",
+    "https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-osx-arm64",
+    "https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-win-x64.exe"
   ]
 }
 </script>
@@ -88,7 +89,7 @@
     <span id="copy-status" role="status" aria-live="polite" class="mt-2 block min-h-5 text-sm text-cyber-cyan"></span>
 
     <div class="mt-8 flex flex-col items-center justify-center gap-2.5 sm:flex-row sm:flex-wrap">
-      <a class="inline-flex items-center gap-2 rounded-xl bg-viking-blue px-5 py-2.5 font-semibold text-white no-underline transition hover:bg-viking-blue/80" href="https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-0.1.0-py3-none-any.whl">
+      <a class="inline-flex items-center gap-2 rounded-xl bg-viking-blue px-5 py-2.5 font-semibold text-white no-underline transition hover:bg-viking-blue/80" href="https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-linux-x64">
         <!-- lucide:download -->
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
         Download
@@ -243,19 +244,20 @@ pippin --version
   </div>
 
   <div id="panel-binary" role="tabpanel" aria-labelledby="tab-binary" class="rounded-b-xl rounded-tr-xl border border-pippin-border bg-pippin-surface/70 p-6 md:p-8 space-y-6 backdrop-blur">
-<pre class="overflow-x-auto rounded-xl border border-pippin-border bg-pippin-canvas p-4 text-[0.88rem] leading-relaxed text-zinc-200"><code class="bg-transparent p-0 font-mono">pip install pippin
-pippin --version
+<pre class="overflow-x-auto rounded-xl border border-pippin-border bg-pippin-canvas p-4 text-[0.88rem] leading-relaxed text-zinc-200"><code class="bg-transparent p-0 font-mono">curl -fSL -o /tmp/pippin-dl/pippin-linux-x64 https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-linux-x64
+chmod +x /tmp/pippin-dl/pippin-linux-x64
+/tmp/pippin-dl/pippin-linux-x64 --version
 <span class="text-zinc-500"># 0.1.0</span>
 </code></pre>
-<pre class="overflow-x-auto rounded-xl border border-pippin-border bg-pippin-canvas p-4 text-[0.88rem] leading-relaxed text-zinc-200"><code class="bg-transparent p-0 font-mono">gh release download v0.1.0 -p 'pippin-0.1.0-py3-none-any.whl' -D /tmp/pippin-dl --repo fluxion-dev/pippin
-pip install /tmp/pippin-dl/pippin-0.1.0-py3-none-any.whl
-pippin --version
+<pre class="overflow-x-auto rounded-xl border border-pippin-border bg-pippin-canvas p-4 text-[0.88rem] leading-relaxed text-zinc-200"><code class="bg-transparent p-0 font-mono">gh release download v0.1.0 -p 'pippin-linux-x64' -D /tmp/pippin-dl --repo fluxion-dev/pippin
+chmod +x /tmp/pippin-dl/pippin-linux-x64
+/tmp/pippin-dl/pippin-linux-x64 --version
 <span class="text-zinc-500"># 0.1.0</span>
 </code></pre>
   </div>
   <div id="panel-global" role="tabpanel" aria-labelledby="tab-global" hidden class="rounded-b-xl rounded-tr-xl border border-pippin-border bg-pippin-surface/70 p-6 md:p-8 space-y-6 backdrop-blur">
-    <h3 class="mb-2 mt-1 text-xl font-semibold text-white">Isolated install (keeps your system python clean)</h3>
-    <p class="text-zinc-300">pippin on PyPI is a CLI, not a library — <code class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-100">pipx</code> installs it into its own venv and puts <code class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-100">pippin</code> on your PATH:</p>
+    <h3 class="mb-2 mt-1 text-xl font-semibold text-white">Isolated install from PyPI</h3>
+    <p class="text-zinc-300">pippin on PyPI is a CLI, not a library — <code class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-100">pipx</code> installs it into its own venv and puts <code class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-100">pippin</code> on your PATH. SVG via pip needs system cairo (see notes below):</p>
 <pre class="overflow-x-auto rounded-xl border border-pippin-border bg-pippin-canvas p-4 text-[0.88rem] leading-relaxed text-zinc-200"><code class="bg-transparent p-0 font-mono">pipx install pippin
 pippin --version
 <span class="text-zinc-500"># 0.1.0</span>
@@ -272,22 +274,29 @@ pippin --help
   </div>
 
   <div class="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
-    <a class="inline-flex items-center justify-center gap-2 rounded-xl bg-viking-blue px-5 py-2.5 text-center font-semibold text-white no-underline transition hover:bg-viking-blue/80" href="https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-0.1.0-py3-none-any.whl">
+    <a class="inline-flex items-center justify-center gap-2 rounded-xl bg-viking-blue px-5 py-2.5 text-center font-semibold text-white no-underline transition hover:bg-viking-blue/80" href="https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-linux-x64">
       <!-- lucide:download -->
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-      Download wheel (0.1.0)
+      Download for Linux (x64)
     </a>
-    <a class="inline-flex items-center justify-center gap-2 rounded-xl bg-viking-blue px-5 py-2.5 text-center font-semibold text-white no-underline transition hover:bg-viking-blue/80" href="https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-0.1.0.tar.gz">
+    <a class="inline-flex items-center justify-center gap-2 rounded-xl bg-viking-blue px-5 py-2.5 text-center font-semibold text-white no-underline transition hover:bg-viking-blue/80" href="https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-osx-arm64">
       <!-- lucide:download -->
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-      Download sdist (0.1.0)
+      Download for macOS (arm64)
+    </a>
+    <a class="inline-flex items-center justify-center gap-2 rounded-xl bg-viking-blue px-5 py-2.5 text-center font-semibold text-white no-underline transition hover:bg-viking-blue/80" href="https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-win-x64.exe">
+      <!-- lucide:download -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="h-4 w-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+      Download for Windows (x64)
     </a>
   </div>
   <p class="text-[0.95rem] text-zinc-400">Prefer to browse? <a class="text-cyber-cyan hover:underline" href="https://github.com/fluxion-dev/pippin/releases">All releases on GitHub</a> (current: <a class="text-cyber-cyan hover:underline" href="https://github.com/fluxion-dev/pippin/releases/tag/v0.1.0">v0.1.0</a>).</p>
   <ul class="list-disc pl-6 text-[0.95rem] text-zinc-400">
-    <li class="mb-1.5">SVG input needs system cairo: <code class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-100">sudo dnf install cairo pango gdk-pixbuf2</code> (Fedora) or <code class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-100">sudo apt install libcairo2 libpango-1.0-0 libgdk-pixbuf2.0-0</code> (Debian/Ubuntu).</li>
-    <li class="mb-1.5">Requires Python 3.10+. UTF-8 charsets need a UTF-8 terminal; fall back to <code class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-100">--charset ascii</code> otherwise.</li>
-    <li class="mb-1.5">For best quality use <code class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-100">--width 120–240</code> with <code class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-100">--charset utf8</code>.</li>
+    <li class="mb-1.5">Binaries are self-contained — SVG works with no system cairo installed. Linux and macOS: <code class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-100">chmod +x</code> the binary after downloading, then run <code class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-100">--version</code> to verify.</li>
+    <li class="mb-1.5">Binaries are unsigned: on macOS run <code class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-100">xattr -d com.apple.quarantine</code> on the file first; Windows may show a SmartScreen prompt.</li>
+    <li class="mb-1.5">macOS builds are arm64 (Apple silicon) only.</li>
+    <li class="mb-1.5">Prefer pip? That path still needs system cairo for SVG: <code class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-100">sudo dnf install cairo pango gdk-pixbuf2</code> (Fedora) or <code class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-100">sudo apt install libcairo2 libpango-1.0-0 libgdk-pixbuf2.0-0</code> (Debian/Ubuntu).</li>
+    <li class="mb-1.5">UTF-8 charsets need a UTF-8 terminal; fall back to <code class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-100">--charset ascii</code> otherwise. For best quality use <code class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-100">--width 120–240</code> with <code class="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[0.9em] text-zinc-100">--charset utf8</code>.</li>
   </ul>
 </div>
 </section>

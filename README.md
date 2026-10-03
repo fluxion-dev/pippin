@@ -15,6 +15,41 @@ ASCII / UTF-8 representations to your terminal.
 
 ## Install
 
+No Python install required: each `v*` tag ships self-contained single-file
+binaries (`.github/workflows/release.yml`, matrix `linux-x64|osx-arm64|win-x64`)
+attached to that tag's GitHub Release. SVG works out of the box — cairo is
+bundled inside the binary.
+
+```bash
+curl -fSL -o /tmp/pippin-dl/pippin-linux-x64 https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-linux-x64
+chmod +x /tmp/pippin-dl/pippin-linux-x64
+/tmp/pippin-dl/pippin-linux-x64 --version
+# 0.1.0
+```
+
+```bash
+gh release download v0.1.0 -p 'pippin-linux-x64' -D /tmp/pippin-dl --repo fluxion-dev/pippin
+chmod +x /tmp/pippin-dl/pippin-linux-x64
+/tmp/pippin-dl/pippin-linux-x64 --version
+# 0.1.0
+```
+
+Direct asset URLs:
+
+- https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-linux-x64
+- https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-osx-arm64
+- https://github.com/fluxion-dev/pippin/releases/download/v0.1.0/pippin-win-x64.exe
+
+Notes:
+
+- macOS builds are arm64 (Apple silicon) only. Downloaded binaries are
+  unsigned — on macOS run `xattr -d com.apple.quarantine pippin-osx-arm64`
+  after downloading; Windows may show a SmartScreen prompt.
+- Prefer pip? `pip install pippin` (or `pipx install pippin`), then
+  `pippin --version`. SVG via pip needs system cairo (see below).
+
+From source (editable install with dev extras):
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate

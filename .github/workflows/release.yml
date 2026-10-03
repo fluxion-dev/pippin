@@ -62,14 +62,16 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
+          FOUND=""
           for root in C:/msys64 D:/a/_temp/msys64; do
             if [ -f "$root/mingw64/bin/libcairo-2.dll" ]; then
               echo "MSYSTEM_PREFIX=$root/mingw64" >> "$GITHUB_ENV"
               echo "Found cairo at $root/mingw64"
+              FOUND=1
               break
             fi
           done
-          test -n "${MSYSTEM_PREFIX:-}" || { echo "libcairo-2.dll not found" >&2; exit 1; }
+          test -n "$FOUND" || { echo "libcairo-2.dll not found" >&2; exit 1; }
       - run: python -m pip install --upgrade pip
       - run: python -m pip install . pyinstaller
       - name: Build single-file binary (unix)

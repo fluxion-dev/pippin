@@ -1,5 +1,5 @@
 [project]
-name = "pippin"
+name = "pippin-art"
 version = "0.1.0"
 description = "High resolution ascii/utf8 image renderer for the terminal"
 readme = "README.md"

@@ -51,7 +51,7 @@ Notes:
 - macOS builds are arm64 (Apple silicon) only. Downloaded binaries are
   unsigned — on macOS run `xattr -d com.apple.quarantine pippin-osx-arm64`
   after downloading; Windows may show a SmartScreen prompt.
-- Prefer pip? `pip install pippin` (or `pipx install pippin`), then
+- Prefer pip? `pip install pippin-art` (or `pipx install pippin-art`), then
   `pippin --version`. SVG via pip needs system cairo (see below).
 
 From source (editable install with dev extras):

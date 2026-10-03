@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  contents: read # required: private repo checkout needs explicit contents scope
   pages: write
   id-token: write
 

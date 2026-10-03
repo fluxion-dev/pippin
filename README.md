@@ -1,5 +1,7 @@
 # Pippin
 
+[![CI](https://github.com/fluxion-dev/pippin/actions/workflows/ci.yml/badge.svg)](https://github.com/fluxion-dev/pippin/actions) [![Release](https://img.shields.io/github/v/release/fluxion-dev/pippin?include_prereleases=true)](https://github.com/fluxion-dev/pippin/releases) [![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE) [![Python](https://img.shields.io/badge/python-3.10%2B-3776AB)](https://www.python.org/)
+
 `pippin` consumes images (`png`, `jpeg`, `svg`) and outputs high-resolution
 ASCII / UTF-8 representations to your terminal.
 

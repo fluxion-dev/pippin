@@ -1,0 +1,83 @@
+name: conventional
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Lint PR title (conventional commits)
+        if: github.event_name == 'pull_request'
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          echo "PR title: $TITLE"
+          if printf '%s' "$TITLE" | grep -qE '^(feat|fix|docs|chore|refactor|test|ci|build|perf|style|revert)(\([a-z0-9/_-]+\))?(!)?: .+'; then
+            echo "PR title is conventional."
+          else
+            echo "PR title is NOT conventional: want 'type(scope)!?: subject' with type feat|fix|docs|chore|refactor|test|ci|build|perf|style|revert." >&2
+            exit 1
+          fi
+      - name: Lint commit subjects (conventional commits)
+        run: |
+          set -e
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # Lint the PR head, not the ephemeral checkout merge
+            # (refs/pull/N/merge, "Merge <sha> into <sha>"): that merge
+            # commit is GitHub-generated and would always FAIL. Authored
+            # "Merge branch" commits on the branch stay in range and
+            # are still rejected below.
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            if git cat-file -e "$HEAD_SHA" 2>/dev/null; then
+              RANGE="origin/${{ github.base_ref }}..$HEAD_SHA"
+            else
+              RANGE="origin/${{ github.base_ref }}..HEAD"
+            fi
+          else
+            RANGE="HEAD~1..HEAD"
+          fi
+          # Factory merges with --merge: a push of a merge commit would
+          # otherwise always FAIL on the GitHub-generated subject. The PR
+          # title was already linted at PR time, so pushes of merge
+          # commits are exempt; direct (non-merge) pushes are still linted.
+          if [ "${{ github.event_name }}" != "pull_request" ] && git rev-parse --verify -q HEAD^2 >/dev/null; then
+            echo "Push of merge commit ($(git log --format='%s' -1 HEAD)) — PR title linted at PR time; skipping."
+            exit 0
+          fi
+          echo "Range: $RANGE"
+          git log --format='%s' "$RANGE" > /tmp/subjects.txt || { echo "git log failed for $RANGE" >&2; exit 1; }
+          cat /tmp/subjects.txt
+          FAIL=0
+          while IFS= read -r s || [ -n "$s" ]; do
+            [ -z "$s" ] && continue
+            case "$s" in
+              "Merge pull request "*|"Merge branch "*)
+                echo "FAIL: merge commit subject is not conventional: $s" >&2
+                FAIL=1
+                ;;
+              *)
+                if printf '%s' "$s" | grep -qE '^(feat|fix|docs|chore|refactor|test|ci|build|perf|style|revert)(\([a-z0-9/_-]+\))?(!)?: .+'; then
+                  echo "PASS: $s"
+                else
+                  echo "FAIL: non-conventional subject: $s" >&2
+                  FAIL=1
+                fi
+                ;;
+            esac
+          done < /tmp/subjects.txt
+          exit $FAIL
+      - name: Validate pyproject version is SemVer
+        run: |
+          VER=$(grep -oE '^version = "[^"]+"' pyproject.toml | head -1 | sed -E 's/^version = "//; s/"$//')
+          echo "pyproject Version: $VER"
+          python3 - "$VER" <<'PY'
+          import re, sys
+          pat = r'^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-((0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(\+([0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*))?$'
+          sys.exit(0 if re.match(pat, sys.argv[1]) else 1)
+          PY

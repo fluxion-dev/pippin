@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://fluxion-dev.github.io/pippin/sitemap.xml

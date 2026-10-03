@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#09090B" stroke="#27272A" stroke-width="2"/>
+  <!-- terminal dots -->
+  <circle cx="14" cy="14" r="2.4" fill="#ff5f57"/>
+  <circle cx="22" cy="14" r="2.4" fill="#febc2e"/>
+  <circle cx="30" cy="14" r="2.4" fill="#28c840"/>
+  <!-- ascii ramp bars: dark -> light -->
+  <g font-family="monospace" font-size="9" text-anchor="middle">
+    <text x="14" y="36" fill="#3f3f46">@</text>
+    <text x="24" y="36" fill="#71717a">#</text>
+    <text x="34" y="36" fill="#a1a1aa">+</text>
+    <text x="44" y="36" fill="#F59E0B">:</text>
+    <text x="52" y="36" fill="#FAFAFA">.</text>
+  </g>
+  <!-- prompt -->
+  <text x="12" y="52" font-family="monospace" font-size="10" fill="#06B6D4">$</text>
+  <text x="22" y="52" font-family="monospace" font-size="10" fill="#FAFAFA">pippin</text>
+  <rect x="48" y="46" width="7" height="9" rx="1" fill="#F59E0B"/>
+</svg>

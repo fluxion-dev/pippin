@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+/* Brand fonts — self-hosted variable woff2, latin subsets only, committed
+   under site/src/assets/fonts/. Never a Google CDN runtime fetch. */
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("./src/assets/fonts/plus-jakarta-sans-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("./src/assets/fonts/jetbrains-mono-latin.woff2") format("woff2");
+}
+
+@theme {
+  --color-pippin-canvas: #09090B;
+  --color-pippin-surface: #18181B;
+  --color-pippin-border: #27272A;
+  --color-viking-gold: #F59E0B;
+  --color-scanner-green: #10B981;
+  --color-viking-blue: #3B82F6;
+  --color-cyber-cyan: #06B6D4;
+  --color-strict-red: #EF4444;
+  --color-pippin-text-primary: #FAFAFA;
+  --color-pippin-text-secondary: #A1A1AA;
+
+  --font-sans: "Plus Jakarta Sans", "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  --shadow-terminal: 0 0 48px rgb(245 158 11 / 0.14), 0 25px 50px -12px rgb(0 0 0 / 0.55);
+  --shadow-card: 0 0 28px rgb(245 158 11 / 0.08), 0 10px 30px -12px rgb(0 0 0 / 0.55);
+}
+
+@layer base {
+  ::selection {
+    background: var(--color-viking-gold);
+    color: var(--color-pippin-canvas);
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-pippin-canvas);
+  }
+
+  :where(a, button, [role="tab"]):focus-visible {
+    outline: 2px solid var(--color-cyber-cyan);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+}
+
+/* Radial-gradient brand glows. */
+@utility glow-gold {
+  background: radial-gradient(closest-side, rgb(245 158 11 / 0.25), transparent);
+}
+
+@utility glow-green {
+  background: radial-gradient(closest-side, rgb(16 185 129 / 0.22), transparent);
+}
+
+@utility glow-cyan {
+  background: radial-gradient(closest-side, rgb(6 182 212 / 0.2), transparent);
+}
+
+@layer components {
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 50;
+    border-radius: 8px;
+    border: 1px solid var(--color-pippin-border);
+    background: var(--color-pippin-surface);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .skip-link:focus {
+    left: 1rem;
+    top: 1rem;
+  }
+
+  /* Dark terminal panel: surface + border + amber glow shadow. */
+  .terminal-window {
+    border-radius: 0.75rem;
+    border: 1px solid var(--color-pippin-border);
+    background-color: var(--color-pippin-surface);
+    box-shadow: var(--shadow-terminal);
+  }
+
+  /* Charset pill: ascii ramp. */
+  .badge-resolved {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 9999px;
+    border: 1px solid rgb(16 185 129 / 0.4);
+    background-color: rgb(16 185 129 / 0.12);
+    color: var(--color-scanner-green);
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  /* Charset pill: requires utf-8 terminal. */
+  .badge-unknown {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 9999px;
+    border: 1px solid rgb(6 182 212 / 0.4);
+    background-color: rgb(6 182 212 / 0.12);
+    color: var(--color-cyber-cyan);
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  /* Solid gold accent badge (calls to action, NEW markers). */
+  .badge-gold {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 9999px;
+    background-color: var(--color-viking-gold);
+    color: var(--color-pippin-canvas);
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+  }
+
+  /* Amber outer glow for accent elements. */
+  .scanner-glow {
+    box-shadow: 0 0 24px rgb(245 158 11 / 0.35), 0 0 64px rgb(245 158 11 / 0.12);
+  }
+}

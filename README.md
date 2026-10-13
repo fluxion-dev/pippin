@@ -4,8 +4,9 @@
 
 `pippin` consumes images (`png`, `jpeg`, `svg`) and outputs high-resolution
 ASCII / UTF-8 representations to your terminal. With `--animate` it consumes
-an animated `gif` and re-renders every frame as text — exporting a frame
-directory or a self-playing text-animation `gif`.
+an animated `gif` (or video: `mp4`/`mpeg`/`mov`/`avi`/`mkv`/`webm`) and
+re-renders every frame as text — exporting a frame directory, a self-playing
+text-animation `gif`, or a text-animation video (`mp4`/`mpeg`).
 
 ## Features
 
@@ -16,6 +17,10 @@ directory or a self-playing text-animation `gif`.
 - Contrast / brightness / invert / aspect correction
 - GIF animation mode (`--animate`): live terminal playback, frame-directory
   export, and self-playing text-animation `.gif` re-export
+- Video animation mode (`--animate` with `mp4`/`mpeg`/`mov`/`avi`/`mkv`/`webm`
+  input, requires system `ffmpeg`): live terminal playback, frame-directory
+  export, and frame-for-frame text-animation video re-export
+  (`-o out.mp4` / `-o out.mpeg`, source audio muxed by default)
 
 ## Install
 
@@ -99,6 +104,18 @@ pippin anim.gif --animate --width 100
 pippin anim.gif --animate --width 100 --no-preview -o frames/        # frame_*.txt/.ansi + meta.json
 pippin anim.gif --animate --width 100 --no-preview -o text_anim.gif  # self-playing text gif
 pippin anim.gif --animate --native-timing --width 80                 # preserve source frame timing
+
+# Animate video (requires ffmpeg on PATH; audio muxed by default)
+pippin clip.mp4 --animate --width 100 --no-preview -o text.mp4      # text video, frame for frame
+pippin clip.mpeg --animate --width 100 --no-preview -o text.mpeg    # mpeg -> mpeg text video
+pippin clip.mp4 --animate --native-timing --width 80                # preserve source fps
+pippin clip.mp4 --animate --width 100 --no-preview --no-audio -o silent.mp4
+
+# Aspect presets: one flag picks width default + center-crop (long-form vs shorts)
+pippin clip.mp4 --animate --preset landscape --no-preview -o longform.mp4   # 16:9
+pippin clip.mp4 --animate --preset portrait --no-preview -o short.mp4      # 9:16 center-crop
+pippin clip.mp4 --animate --preset portrait --width 80 -o short.mp4        # preset, wider grid
+pippin clip.mp4 --animate --preset portrait --no-crop -o stretched.mp4     # stretch, don't crop
 ```
 
 ## CLI reference
@@ -108,31 +125,38 @@ pippin INPUT [-w WIDTH] [-H HEIGHT] [--charset {ascii,utf8,blocks} | --custom-ch
              [--color | --no-color] [--preview | --no-preview]
              [-o FILE] [--invert] [--contrast F] [--brightness F] [--aspect F]
              [--animate] [--fps FPS] [--native-timing] [--max-frames N] [--sample N]
-             [--loop N] [--gif-font PATH] [--gif-font-size N]
+             [--loop N] [--gif-font PATH] [--gif-font-size N] [--audio | --no-audio]
+             [--gpu | --no-gpu]
 ```
 
 | Flag | Default | Meaning |
 |------|---------|---------|
-| `INPUT` | — | Input image path (`--animate` requires `.gif`) |
-| `-w, --width` | `100` | Output width in characters (1–2000) |
-| `-H, --height` | auto | Output height in characters; auto preserves aspect with correction |
+| `INPUT` | — | Input image path (`--animate`: `.gif` or video `mp4`/`mpeg`/`mpg`/`mov`/`avi`/`mkv`/`webm`) |
+| `-w, --width` | `100` | Output width in characters (1–2000; preset default when `--preset` given and `--width` omitted) |
+| `-H, --height` | auto | Output height in characters; auto preserves aspect with correction (explicit `--height` also disables preset crop) |
+| `--preset` | — | `landscape` (16:9, 100 cols) or `portrait` (9:16, 60 cols): one-flag recipe, explicit flags still override |
+| `--quality` | `medium` | Global grid-size multiplier: `low` 0.6x, `medium` 1x, `high` 1.6x (stills + animation) |
+| `--jobs` | auto | Parallel frame-render workers for `--animate` video (`0`=auto by clip length, `1`=serial) |
+| `--crop` / `--no-crop` | `crop` | Center-crop to the `--preset` aspect / stretch to fit |
 | `--charset` | `utf8` | `ascii`, `utf8`, or `blocks` ramp |
 | `--custom-chars` | — | Overrides `--charset` with your own dark→light ramp |
 | `--color` / `--no-color` | `color` | ANSI truecolor foreground per character |
 | `--preview` / `--no-preview` | `preview` | Print to stdout (still) / play animation (`--animate`) |
-| `-o, --export` | — | Still: rendering file (`.txt`/`.ansi`); `--animate`: frame dir or `.gif` |
+| `-o, --export` | — | Still: rendering file (`.txt`/`.ansi`); `--animate`: frame dir, `.gif`, or video (`.mp4`/`.mpeg`) |
 | `--invert` | off | Invert luminance ramp |
 | `--contrast` | `1.0` | Pillow contrast factor |
 | `--brightness` | `1.0` | Pillow brightness factor |
 | `--aspect` | `0.55` | Height correction for terminal cell aspect (char H ≈ 2× W). Lower = taller image. |
-| `--animate` | off | GIF mode: render all frames as text frames |
+| `--animate` | off | Animation mode: render all frames as text frames (gif or video) |
 | `--fps` | `12` | Uniform playback/encode rate (0 < fps ≤ 60); ignored with `--native-timing` |
-| `--native-timing` | off | Preserve source per-frame durations instead of uniform `--fps` |
+| `--native-timing` | off | Preserve source timing (gif durations / video fps) instead of uniform `--fps` |
 | `--max-frames` | all | Cap frames kept after sampling |
 | `--sample` | `1` | Keep every Nth frame |
-| `--loop` | infinite preview / source loop for `.gif` | Animation plays / GIF loop count, `0`=infinite |
-| `--gif-font` | system monospace | TTF/OTF path for `out.gif` rasterization |
-| `--gif-font-size` | `20` | Font size for `out.gif` rasterization (8–72) |
+| `--loop` | infinite preview / source loop for `.gif` | Animation plays / GIF loop count, `0`=infinite (ignored for video output) |
+| `--gif-font` | system monospace | TTF/OTF path for `--animate` `.gif` / video rasterization |
+| `--gif-font-size` | `20` | Font size for `--animate` `.gif` / video rasterization (8–72) |
+| `--audio` / `--no-audio` | `audio` | Mux source audio into `--animate` video output / drop it |
+| `--gpu` / `--no-gpu` | `gpu` | Use GPU video encode/decode when a working backend exists / force software |
 
 Export format: if `--color` is on, the export file contains ANSI escapes
 (`.ansi`-ready). With `--no-color` it is plain text.
@@ -150,3 +174,19 @@ Export format: if `--color` is on, the export file contains ANSI escapes
 - Transparency is composited onto black (use `--invert` for light terminals,
   compositing background is fixed black for predictable luminance).
 - For best quality use `--width 120–240` with `--charset utf8`.
+- Video mode (`--animate` with video input/output) shells out to the system
+  `ffmpeg`/`ffprobe` binaries — install `ffmpeg` and keep it on `PATH`.
+  Conversion streams frame-by-frame (decode → convert → rasterize → encode),
+  so RAM stays flat (~250 MB peak on a 1080p feature clip) regardless of
+  length. Rasterization dominates CPU time, so identical frames are
+  deduped (static scenes skip re-rendering) and convert+rasterize fans
+  out to worker processes (`--jobs`, auto by clip length). The output video re-uses the text rasterizer from `.gif` export, so
+  `--gif-font`/`--gif-font-size` apply to video too. Source audio is muxed
+  by default (`--no-audio` drops it); `.mpeg` output uses `mpeg2video`
+  (arbitrary fps like the 12fps default work, unlike `mpeg1video`).
+- GPU acceleration is best-effort and on by default (`--no-gpu` forces
+  software): decode tries `ffmpeg -hwaccel auto`, encode prefers a probed
+  working hardware encoder (`h264_nvenc`/`h264_qsv`/`h264_amf`/
+  `h264_videotoolbox`/`h264_vaapi`, plus `mpeg2`/`vp9` variants) and falls
+  back to software when none works. Probes run a real tiny encode, since
+  capability lists don't guarantee a usable device (e.g. VMs).

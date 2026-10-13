@@ -56,6 +56,26 @@ def test_explicit_height():
     assert len(grid) == 3 and len(grid[0]) == 10
 
 
+def test_center_crop_wide_to_portrait():
+    grid = convert(_solid((128, 128, 128), size=(64, 32)), " @",
+                   ConvertOptions(width=60, crop_aspect=9 / 16))
+    assert len(grid[0]) == 60
+    assert len(grid) == 59  # cropped 18x32 region, not stretched 60x16
+
+
+def test_center_crop_noop_when_aspect_matches():
+    grid = convert(_solid((128, 128, 128), size=(64, 32)), " @",
+                   ConvertOptions(width=60, crop_aspect=2.0))
+    assert len(grid) == 16  # same as no crop
+
+
+def test_center_crop_tall_to_landscape():
+    grid = convert(_solid((128, 128, 128), size=(32, 64)), " @",
+                   ConvertOptions(width=100, crop_aspect=16 / 9))
+    assert len(grid[0]) == 100
+    assert len(grid) == 31  # cropped 32x18 region
+
+
 def test_plain_has_no_escapes_ansi_has_truecolor():
     grid = convert(_solid((255, 0, 0), size=(4, 2)), " @", ConvertOptions(width=4, height=2))
     plain = to_plain(grid)
@@ -105,3 +125,30 @@ def test_cli_no_preview_no_export_errors(capsys):
         _solid((0, 0, 0)).save(tf.name)
         rc = main([tf.name, "--no-preview"])
     assert rc == 2
+
+
+def test_quality_scales_still_grid(tmp_path):
+    f = tmp_path / "in.png"
+    _solid((200, 200, 200), size=(16, 8)).save(f)
+    for quality, cols in (("low", 12), ("medium", 20), ("high", 32)):
+        out = tmp_path / f"{quality}.txt"
+        rc = main([str(f), "--width", "20", "--charset", "ascii", "--no-color",
+                   "--no-preview", "--quality", quality, "--export", str(out)])
+        assert rc == 0
+        assert len(out.read_text().splitlines()[0]) == cols
+
+
+def test_verified_renderer_matches_reference():
+    from pippin.text_gif import font_cell, grid_to_image, resolve_font, verified_grid_renderer
+
+    ramp = get_ramp("utf8")
+    # Grid exercising every ramp character (overhangs, bearings included).
+    rows = [[(ch, (200, 100, 50)) for ch in ramp[i : i + 20]] for i in range(0, len(ramp), 20)]
+    font = resolve_font(None, 20)
+    cw, ch = font_cell(font, ramp)
+    ref = grid_to_image(rows, True, font, cw, ch)
+    render_one = verified_grid_renderer(font, cw, ch, ramp)
+    # DejaVu engages the fast path; either way output must match.
+    assert render_one(rows, True).tobytes() == ref.tobytes()
+    assert render_one(rows, False).tobytes() == grid_to_image(rows, False, font, cw, ch).tobytes()
+    assert getattr(render_one, "__name__", "") == "render_fast"

@@ -14,6 +14,25 @@ class ConvertOptions:
     aspect: float = 0.55  # terminal cell H/W correction (<1 compresses height)
     contrast: float = 1.0
     brightness: float = 1.0
+    crop_aspect: float | None = None  # None => no crop; else center-crop to W/H ratio first
+
+
+def _center_crop(img: Image.Image, target_aspect: float) -> Image.Image:
+    """Center-crop to a W/H aspect ratio (crop, don't stretch)."""
+    src_w, src_h = img.size
+    if src_w == 0 or src_h == 0:
+        raise ValueError("image has zero dimension")
+    if abs(src_w / src_h - target_aspect) < 1e-6:
+        return img
+    if src_w / src_h > target_aspect:
+        # Too wide: trim sides (landscape clip -> vertical shorts).
+        new_w = max(1, round(src_h * target_aspect))
+        x0 = (src_w - new_w) // 2
+        return img.crop((x0, 0, x0 + new_w, src_h))
+    # Too tall: trim top/bottom.
+    new_h = max(1, round(src_w / target_aspect))
+    y0 = (src_h - new_h) // 2
+    return img.crop((0, y0, src_w, y0 + new_h))
 
 
 def convert(img: Image.Image, ramp: str, opts: ConvertOptions) -> list[list[tuple[str, tuple[int, int, int]]]]:
@@ -23,6 +42,8 @@ def convert(img: Image.Image, ramp: str, opts: ConvertOptions) -> list[list[tupl
     """
     if opts.width < 1:
         raise ValueError("--width must be >= 1")
+    if opts.crop_aspect is not None:
+        img = _center_crop(img, opts.crop_aspect)
     w, h = _target_size(img, opts.width, opts.height, opts.aspect)
 
     work = img.resize((w, h), Image.LANCZOS)

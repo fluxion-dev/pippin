@@ -59,7 +59,7 @@ def _make_video(path: Path, fps: int = 12, with_audio: bool = False) -> Path:
     ]
     if with_audio:
         cmd += ["-f", "lavfi", "-i", "sine=frequency=440:duration=2", "-shortest"]
-    cmd += ["-pix_fmt", "yuv420p", "-c:v", "libopenh264" if path.suffix == ".mp4" else "mpeg2video"]
+    cmd += ["-pix_fmt", "yuv420p", "-c:v", "mpeg4" if path.suffix == ".mp4" else "mpeg2video"]
     if with_audio:
         cmd += ["-c:a", "aac"]
     cmd += [str(path)]
@@ -386,7 +386,7 @@ def test_duplicate_frames_reuse_render(tmp_path):
     subprocess.run(
         ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
          "-framerate", "12", "-i", str(tmp_path / "dup_%02d.png"),
-         "-pix_fmt", "yuv420p", "-c:v", "libopenh264", str(src)],
+         "-pix_fmt", "yuv420p", "-c:v", "mpeg4", str(src)],
         check=True,
     )
     rc = main([str(src), "--animate", "--width", "20", "--no-color",

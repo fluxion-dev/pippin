@@ -1,6 +1,6 @@
 """pippin — high resolution ascii/utf8 image renderer."""
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 from .anim_export import export_frame_dir, write_anim_meta
 from .charsets import CHARSETS, get_ramp
